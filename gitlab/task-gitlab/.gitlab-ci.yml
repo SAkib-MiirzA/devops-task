@@ -1,0 +1,36 @@
+stages:
+  - build
+  - deploy
+  - test
+
+variables:
+  DOCKER_IMAGE: 'devops-task01'
+
+build:
+  stage: build
+  tags:
+    - devops-task01
+  script:
+    - echo "Building Docker image..."
+    - docker build -t $DOCKER_IMAGE .
+
+deploy:
+  stage: deploy
+  tags:
+    - devops-task01
+  script:
+    - echo "Deploying Docker container..."
+    - docker stop devops-task01 || true
+    - docker rm devops-task01 || true
+    - docker run -d --name devops-task01 -p 8002:8002 -p 8003:8003 $DOCKER_IMAGE
+
+test:
+  stage: test
+  tags:
+    - devops-task01
+  script:
+    - echo "Testing if the servers are up..."
+    - apt-get update && apt-get install -y curl
+    - sleep 10
+    - '[[ $(curl -s -o /dev/null -w "%{http_code}" http://103.151.111.241:8002) == "200" ]]'
+    - '[[ $(curl -s -o /dev/null -w "%{http_code}" http://103.151.111.241:8003) == "200" ]]'
