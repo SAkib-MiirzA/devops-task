@@ -1,0 +1,36 @@
+stages:
+  - build
+  - deploy
+  - test
+
+variables:
+  DOCKER_IMAGE: 'team-s'
+
+build:
+  stage: build
+  tags:
+    - team-s
+  script:
+    - echo "Building Docker image..."
+    - docker build -t $DOCKER_IMAGE .
+
+deploy:
+  stage: deploy
+  tags:
+    - team-s
+  script:
+    - echo "Deploying Docker container..."
+    - docker stop team-s || true
+    - docker rm team-s || true
+    - docker run -d --name team-s -p 8002:8002 -p 8003:8003 $DOCKER_IMAGE
+
+test:
+  stage: test
+  tags:
+    - team-s
+  script:
+    - echo "Testing if the servers are up..."
+    - apt-get update && apt-get install -y curl
+    - sleep 10
+    - '[[ $(curl -s -o /dev/null -w "%{http_code}" http://103.151.111.241:8002) == "200" ]]'
+    - '[[ $(curl -s -o /dev/null -w "%{http_code}" http://103.151.111.241:8003) == "200" ]]'
